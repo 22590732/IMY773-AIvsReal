@@ -1,0 +1,238 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f7f7f5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    margin: 0;
+}
+
+/* main container */
+.quiz-container {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* image row – side by side, no containers */
+#imgContainer {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+}
+
+/* direct image styling – rectangular, large, with shadow */
+.img1,
+.img2 {
+    width: contain;
+    height: 30em;
+    /* half of parent minus half the gap */
+    aspect-ratio: 3 / 4;
+    /* portrait rectangle (taller than wide) */
+    object-fit: contain;
+    /* fills the rectangle, may crop edges */
+    border-radius: 20px;
+    box-shadow: 0 16px 28px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    background: #fafafa;
+    transition: transform 0.1s ease;
+}
+
+.img1:active,
+.img2:active {
+    transform: scale(0.98);
+    /* subtle press effect */
+}
+
+/* correct flash overlay */
+.result-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(80, 180, 120, 0.22);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+}
+
+.result-overlay.show {
+    opacity: 1;
+}
+
+.result-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+/* wrong answer flash */
+#imgContainer.wrong-flash {
+    outline: 3px solid #dc4646;
+    outline-offset: 4px;
+    border-radius: 24px;
+}
+
+/* hint text */
+#hint,
+.hint {
+    text-align: center;
+    font-size: 0.7rem;
+    color: #bbb;
+    letter-spacing: 0.06em;
+    font-weight: 300;
+    transition: opacity 0.4s;
+}
+
+/* ========== CODE DIGIT AREA ========== */
+#codeArea {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    height: 80px;
+}
+
+.code-digit-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.digit-placeholder {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 500;
+    background: #efefea;
+    width: 48px;
+    text-align: center;
+    padding: 6px 0;
+    border-radius: 40px;
+    color: #3b3b37;
+    transition: all 0.2s;
+}
+
+.digit-line {
+    width: 1px;
+    height: 24px;
+    background: #cdcbc4;
+}
+
+.circle-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+/* circles */
+.prog-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #cbc9c2;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: default;
+    overflow: hidden;
+}
+
+.c-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: #50b478;
+    opacity: 0;
+    transition: opacity 0.4s cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+.c-fill.active {
+    opacity: 1;
+}
+
+.c-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.c-dot {
+    width: 6px;
+    height: 6px;
+    background: #bcbab2;
+    border-radius: 50%;
+}
+
+/* digit reveal animation */
+@keyframes fadeReveal {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+        background: #efefea;
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        background: #50b478;
+        color: white;
+    }
+}
+
+.digit-placeholder.revealed {
+    background: #50b478;
+    color: white;
+    box-shadow: 0 2px 8px rgba(80, 180, 120, 0.3);
+    animation: fadeReveal 0.4s ease forwards;
+}
+
+/* optional progress area */
+#progressArea {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+/* final message */
+.final-message {
+    font-family: 'DM Mono', monospace;
+    text-align: center;
+    background: #eef3e9;
+    padding: 10px;
+    border-radius: 60px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #2b6e47;
+    margin-top: 8px;
+}
+
+/* make containers responsive on smaller screens – adjust height */
+@media (max-width: 480px) {
+    .img-wrap {
+        height: 220px;
+        /* shorter on very small screens, still rectangular */
+    }
+}

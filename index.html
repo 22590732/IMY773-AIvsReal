@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spot the Difference</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="./index.css" />
+</head>
+
+<body>
+    <div style="width:100%;max-width:560px;display:flex;flex-direction:column;gap:20px;">
+        <!-- Images -->
+        <div id="imgContainer">
+            <img class="img1" alt="Left image">
+            <img class="img2" alt="Right image">
+        </div>
+
+        <!-- Hint -->
+        <div style="text-align:center;">
+            <span id="hint">tap the image that is fake</span>
+        </div>
+
+        <!-- 4-digit code area: 3 circles under each digit -->
+        <div id="codeArea"">
+            <!-- Digit 1 -->
+            <div class=" code-digit-group">
+            <div class="digit-placeholder" id="digit1">?</div>
+            <div class="digit-line"></div>
+            <div class="circle-row">
+                <div class="prog-circle" id="circle1">
+                    <div class="c-fill"></div>
+                    <div class="c-icon"></div>
+                    <div class="c-dot"></div>
+                </div>
+                <div class="prog-circle" id="circle2">
+                    <div class="c-fill"></div>
+                    <div class="c-icon"></div>
+                    <div class="c-dot"></div>
+                </div>
+                <div class="prog-circle" id="circle3">
+                    <div class="c-fill"></div>
+                    <div class="c-icon"></div>
+                    <div class="c-dot"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Digit 2 -->
+        <div class="code-digit-group">
+            <div class="digit-placeholder" id="digit2">?</div>
+            <div class="digit-line"></div>
+            <div class="circle-row">
+                <div class="prog-circle" id="circle4">
+                    <div class="c-fill"></div>
+                    <div class="c-icon"></div>
+                    <div class="c-dot"></div>
+                </div>
+                <div class="prog-circle" id="circle5">
+                    <div class="c-fill"></div>
+                    <div class="c-icon"></div>
+                    <div class="c-dot"></div>
+                </div>
+                <div class="prog-circle" id="circle6">
+                    <div class="c-fill"></div>
+                    <div class="c-icon"></div>
+                    <div class="c-dot"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Digit 3 -->
+        <div class="code-digit-group">
+            <div class="digit-placeholder" id="digit3">?</div>
+            <div class="digit-line"></div>
+            <div class="circle-row">
+                <div class="prog-circle" id="circle7">
+                    <div class="c-fill"></div>
+                    <div class="c-icon"></div>
+                    <div class="c-dot"></div>
+                </div>
+                <div class="prog-circle" id="circle8">
+                    <div class="c-fill"></div>
+                    <div class="c-icon"></div>
+                    <div class="c-dot"></div>
+                </div>
+                <div class="prog-circle" id="circle9">
+                    <div class="c-fill"></div>
+                    <div class="c-icon"></div>
+                    <div class="c-dot"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Digit 4 -->
+        <div class="code-digit-group">
+            <div class="digit-placeholder" id="digit4">?</div>
+            <div class="digit-line"></div>
+            <div class="circle-row">
+                <div class="prog-circle" id="circle10">
+                    <div class="c-fill"></div>
+                    <div class="c-icon"></div>
+                    <div class="c-dot"></div>
+                </div>
+                <div class="prog-circle" id="circle11">
+                    <div class="c-fill"></div>
+                    <div class="c-icon"></div>
+                    <div class="c-dot"></div>
+                </div>
+                <div class="prog-circle" id="circle12">
+                    <div class="c-fill"></div>
+                    <div class="c-icon"></div>
+                    <div class="c-dot"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+    <script src="./script.js"></script>
+</body>
+
+</html>
