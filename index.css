@@ -10,8 +10,133 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 32px 16px;
     margin: 0;
+    padding: 32px 16px;
+}
+
+/* Password Screen */
+.password-screen {
+    position: fixed;
+    inset: 0;
+    background: #f7f7f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.password-screen.hidden {
+    display: none;
+}
+
+.password-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-width: 300px;
+}
+
+.password-container h2 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #3b3b37;
+    margin: 0;
+}
+
+.otp-inputs {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.otp-input {
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+    border: 2px solid #cdcbc4;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    transition: all 0.2s;
+}
+
+.otp-input:focus {
+    outline: none;
+    border-color: #50b478;
+    box-shadow: 0 0 0 3px rgba(80, 180, 120, 0.1);
+}
+
+.otp-input:valid {
+    border-color: #50b478;
+}
+
+.otp-input.error {
+    border-color: #dc4646;
+    animation: otpShake 0.5s ease-in-out;
+}
+
+@keyframes otpShake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: translateX(-8px);
+    }
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: translateX(8px);
+    }
+}
+
+.password-container button {
+    width: 100%;
+    padding: 12px;
+    background: #50b478;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 20px;
+}
+
+.password-container button:hover {
+    background: #40a068;
+}
+
+.password-container button:active {
+    transform: scale(0.98);
+}
+
+#quizContent.quiz-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#quizContent.fade-in {
+    animation: fadeInQuiz 0.6s ease forwards;
+}
+
+@keyframes fadeInQuiz {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
 /* main container */
@@ -23,10 +148,17 @@ body {
     gap: 20px;
 }
 
+.heading {
+    font-size: 1.5rem;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 32px;
+}
+
 /* image row – side by side, no containers */
 #imgContainer {
     display: flex;
-    gap: 12px;
+    gap: 6rem;
     justify-content: center;
     align-items: center;
 }
@@ -34,15 +166,15 @@ body {
 /* direct image styling – rectangular, large, with shadow */
 .img1,
 .img2 {
-    width: contain;
     height: 30em;
     /* half of parent minus half the gap */
-    aspect-ratio: 3 / 4;
     /* portrait rectangle (taller than wide) */
     object-fit: contain;
     /* fills the rectangle, may crop edges */
     border-radius: 20px;
-    box-shadow: 0 16px 28px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 16px 28px rgba(0, 0, 0, 0.15),
+        0 2px 4px rgba(0, 0, 0, 0.05);
     cursor: pointer;
     background: #fafafa;
     transition: transform 0.1s ease;
@@ -52,6 +184,32 @@ body {
 .img2:active {
     transform: scale(0.98);
     /* subtle press effect */
+}
+
+/* shake animation for wrong answer */
+@keyframes shake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: translateX(-10px);
+    }
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: translateX(10px);
+    }
+}
+
+.img1.wrong-shake,
+.img2.wrong-shake {
+    animation: shake 0.5s ease-in-out;
 }
 
 /* correct flash overlay */
@@ -98,6 +256,13 @@ body {
     letter-spacing: 0.06em;
     font-weight: 300;
     transition: opacity 0.4s;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#hint.show {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 /* ========== CODE DIGIT AREA ========== */
@@ -235,4 +400,92 @@ body {
         height: 220px;
         /* shorter on very small screens, still rectangular */
     }
+}
+
+/* Quiz completion animations */
+#imgContainer.quiz-complete {
+    animation: hideImages 0.7s ease forwards;
+}
+
+@keyframes hideImages {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+        visibility: visible;
+    }
+    1% {
+        visibility: hidden;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.9);
+        visibility: hidden;
+    }
+}
+
+#hint.quiz-complete {
+    animation: fadeHint 0.5s ease forwards;
+}
+
+@keyframes fadeHint {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+h1.quiz-complete {
+    animation: fadeHint 0.5s ease forwards;
+}
+
+#codeArea.quiz-complete {
+    animation: showCode 0.9s ease forwards;
+    gap: 30px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+}
+
+@keyframes showCode {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+    }
+    20% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+.digit-placeholder.quiz-complete {
+    animation: enlargeDigit 0.7s ease forwards;
+    font-size: 2.5rem;
+}
+
+@keyframes enlargeDigit {
+    0% {
+        font-size: 1.2rem;
+    }
+    100% {
+        font-size: 2.5rem;
+    }
+}
+
+.code-digit-group.centered {
+    flex: 0;
+}
+
+.circle-row.quiz-complete {
+    display: none;
+}
+
+.digit-line.quiz-complete {
+    display: none;
 }
