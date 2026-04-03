@@ -1,6 +1,6 @@
 
 // array for the 4-digit code
-const code = [0, 0, 0, 0];
+const code = [1, 7, 6, 3];
 
 // get each cirlce element
 const circle1 = document.getElementById('circle1');
