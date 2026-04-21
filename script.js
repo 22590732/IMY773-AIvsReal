@@ -35,7 +35,7 @@ document.addEventListener('keydown', (e) => {
 const CORRECT_PASSWORD = '1763'
 const otpInputs = document.querySelectorAll('.otp-input')
 const passwordScreen = document.getElementById('passwordScreen')
-const quizContent = document.getElementById('quizContent')
+const gameContent = document.getElementById('gameContent')
 const passwordError = document.getElementById('passwordError')
 const passwordButton = document.getElementById('passwordButton')
 
@@ -86,9 +86,10 @@ function checkOTP() {
     if (otp === CORRECT_PASSWORD) {
         passwordScreen.classList.add('hidden')
         setTimeout(() => {
-            quizContent.classList.remove('quiz-hidden')
-            quizContent.classList.add('fade-in')
+            gameContent.classList.remove('quiz-hidden')
+            gameContent.classList.add('fade-in')
         }, 100)
+        initGame()
     } else {
         showPasswordError()
     }
@@ -112,282 +113,224 @@ function showPasswordError() {
 // Focus first input on load
 otpInputs[0].focus()
 
-// array for the 4-digit code
-const code = [5, 9, 0, 4]
+// Memory Game Variables
+const CODE = [5, 9, 0, 4]
+const ALL_IMAGES = [
+    './photos/BMW.png',
+    './photos/beach.png',
+    './photos/clurb.png',
+    './photos/cuddle.png',
+    './photos/engagement.png',
+    './photos/flowers.png',
+    './photos/kiss-restaurant.png',
+    './photos/kiss.png',
+    './photos/marathon.png',
+    './photos/mirror.png',
+    './photos/steps.png',
+    './photos/thailand.png'
+]
 
-// get each cirlce element
-const circle1 = document.getElementById('circle1')
-const circle2 = document.getElementById('circle2')
-const circle3 = document.getElementById('circle3')
-const circle4 = document.getElementById('circle4')
-const circle5 = document.getElementById('circle5')
-const circle6 = document.getElementById('circle6')
-const circle7 = document.getElementById('circle7')
-const circle8 = document.getElementById('circle8')
-const circle9 = document.getElementById('circle9')
-const circle10 = document.getElementById('circle10')
-const circle11 = document.getElementById('circle11')
-const circle12 = document.getElementById('circle12')
+let IMAGES = []
 
-// varaibles to hold the digits
-const digit1 = document.getElementById('digit1')
-const digit2 = document.getElementById('digit2')
-const digit3 = document.getElementById('digit3')
-const digit4 = document.getElementById('digit4')
+// Function to randomly select 5 images from all available images
+function selectRandomImages() {
+    const shuffled = [...ALL_IMAGES].sort(() => Math.random() - 0.5)
+    IMAGES = shuffled.slice(0, 5)
+}
 
-digit1.textContent = code[0]
-digit2.textContent = code[1]
-digit3.textContent = code[2]
-digit4.textContent = code[3]
+let currentRound = 1
+let flippedCards = []
+let matchedPairs = 0
+let canFlip = true
+let cards = []
 
-digit1.style.visibility = 'hidden'
-digit2.style.visibility = 'hidden'
-digit3.style.visibility = 'hidden'
-digit4.style.visibility = 'hidden'
+// Initialize game
+function initGame() {
+    setupRound()
+}
 
-// Variables holding the images
-const img1 = document.querySelector('.img1')
-const img2 = document.querySelector('.img2')
-img1.addEventListener('click', () => handleAnswer(true))
-img2.addEventListener('click', () => handleAnswer(false))
+// Create card elements
+function createCards() {
+    const gameGrid = document.getElementById('gameGrid')
+    gameGrid.innerHTML = ''
 
-// Create image buckets
+    // Create pairs
+    const cardImages = [...IMAGES, ...IMAGES]
+    // Shuffle cards
+    cardImages.sort(() => Math.random() - 0.5)
 
-const correct = []
-const incorrect = []
+    cardImages.forEach((image, index) => {
+        const card = document.createElement('div')
+        card.classList.add('memory-card')
+        card.dataset.image = image
+        card.dataset.index = index
 
-// Populate the correct buckets with file paths to each image in the Instagram/Hers folder
-correct.push('./photos/real/0-club.png')
-correct.push('./photos/real/1-flower-picking.png')
-correct.push('./photos/real/2-run.png')
-correct.push('./photos/real/3-stairs.png')
-correct.push('./photos/real/4-padel.png')
-correct.push('./photos/real/5-selfie.png')
-correct.push('./photos/real/6-lunch.png')
-correct.push('./photos/real/7-thailand.png')
-correct.push('./photos/real/8-car-selfie.png')
-correct.push('./photos/real/9-mirror-selfie.png')
-correct.push('./photos/real/10-tennis.png')
-correct.push('./photos/real/11-new-car.png')
+        card.innerHTML = `
+            <div class="card-face card-back">
+                <img src="./photos/polaroid-back.png" alt="Back">
+            </div>
+            <div class="card-face card-front">
+                <img src="${image}" alt="Card">
+            </div>
+        `
 
-// Populate the incorrect buckets with file paths to each image in the Instagram/Him folder
-incorrect.push('./photos/ai/0-beach.png')
-incorrect.push('./photos/ai/1-couch.png')
-incorrect.push('./photos/ai/2-dinner.png')
-incorrect.push('./photos/ai/3-club.png')
-incorrect.push('./photos/ai/4-proposal.png')
-incorrect.push('./photos/ai/5-run.png')
-incorrect.push('./photos/ai/6-kissing.png')
-incorrect.push('./photos/ai/7-car.png')
-incorrect.push('./photos/ai/8-thailand.png')
-incorrect.push('./photos/ai/9-flower-picking.png')
-incorrect.push('./photos/ai/10-stairs.png')
-incorrect.push('./photos/ai/11-mirror.png')
+        card.addEventListener('click', () => flipCard(card))
+        gameGrid.appendChild(card)
+    })
 
-// Function to choose a random index in the correct and incorrect buckets
-let currentCorrectIndex = 0
-let currentIncorrectIndex = 0
+    cards = Array.from(document.querySelectorAll('.memory-card'))
+}
 
-function getNextCorrectImage() {
-    if (correct.length > 0) {
-        currentCorrectIndex = Math.floor(Math.random() * correct.length)
+// Flip a card
+function flipCard(card) {
+    if (!canFlip || card.classList.contains('flipped') || card.classList.contains('matched')) {
+        return
+    }
+
+    if (flippedCards.length < 2) {
+        card.classList.add('flipped')
+        flippedCards.push(card)
+
+        if (flippedCards.length === 2) {
+            canFlip = false
+            checkMatch()
+        }
     }
 }
 
-function getNextIncorrectImage() {
-    if (incorrect.length > 0) {
-        currentIncorrectIndex = Math.floor(Math.random() * incorrect.length)
+// Check if flipped cards match
+function checkMatch() {
+    const card1 = flippedCards[0]
+    const card2 = flippedCards[1]
+
+    const match = card1.dataset.image === card2.dataset.image
+
+    if (match) {
+        setTimeout(() => {
+            card1.classList.add('matched')
+            card2.classList.add('matched')
+            matchedPairs++
+            resetFlipped()
+
+            if (matchedPairs === 5) {
+                endRound()
+            }
+        }, 500)
+    } else {
+        setTimeout(() => {
+            card1.classList.remove('flipped')
+            card2.classList.remove('flipped')
+            resetFlipped()
+        }, 800)
     }
 }
 
-let isLeftCorrect = true
+// Reset flipped cards array
+function resetFlipped() {
+    flippedCards = []
+    canFlip = true
+}
 
-function updateImages() {
-    getNextCorrectImage()
-    getNextIncorrectImage()
-
-    // choose a random boolean to determine which image goes where
-    const showCorrectOnLeft = Math.random() < 0.5
-    if (showCorrectOnLeft) {
-        img1.src = correct[currentCorrectIndex]
-        img2.src = incorrect[currentIncorrectIndex]
-        isLeftCorrect = true
-    }
-    else {
-        img1.src = incorrect[currentIncorrectIndex]
-        img2.src = correct[currentCorrectIndex]
-        isLeftCorrect = false
+// End current round
+function endRound() {
+    revealDigit(currentRound - 1)
+    const nextBtn = document.getElementById('nextRoundBtn')
+    nextBtn.style.display = 'block'
+    if (currentRound === 4) {
+        nextBtn.textContent = 'Reveal Code'
     }
 }
 
-// Counter for correct answers
-let correctCount = 0
-
-// function to reveal digits when the count reaches certain thresholds
-function checkDigits() {
-    if (correctCount == 3) { // 0, 1, 2
-        revealDigit(digit1)
-    }
-    if (correctCount == 6) { // 3, 4, 5
-        revealDigit(digit2)
-    }
-    if (correctCount == 9) { // 6, 7, 8
-        revealDigit(digit3)
-    }
-    if (correctCount == 12) { // 9, 10, 11
-        revealDigit(digit4)
-        setTimeout(triggerQuizComplete, 400)
+// Reveal digit based on round
+function revealDigit(digitIndex) {
+    const digitElement = document.getElementById(`digit${digitIndex + 1}`)
+    if (digitElement && !digitElement.classList.contains('revealed')) {
+        digitElement.textContent = CODE[digitIndex]
+        digitElement.classList.add('revealed')
+        digitElement.style.visibility = 'visible'
+        fillCircles(digitIndex)
     }
 }
 
-// function to trigger completion animation
-function triggerQuizComplete() {
-    const imgContainer = document.getElementById('imgContainer')
+// Fill circles for the revealed digit
+function fillCircles(digitIndex) {
+    const startCircle = digitIndex * 3 + 1
+    for (let i = 0; i < 3; i++) {
+        const circle = document.getElementById(`circle${startCircle + i}`)
+        if (circle) {
+            const fillDiv = circle.querySelector('.c-fill')
+            const iconDiv = circle.querySelector('.c-icon')
+            const dotDiv = circle.querySelector('.c-dot')
+
+            if (fillDiv && !fillDiv.classList.contains('active')) {
+                fillDiv.classList.add('active')
+                if (iconDiv) {
+                    iconDiv.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>`
+                }
+                if (dotDiv) dotDiv.style.display = 'none'
+            }
+        }
+    }
+}
+
+// Setup new round
+function setupRound() {
+    selectRandomImages()
+    matchedPairs = 0
+    flippedCards = []
+    canFlip = true
+    document.getElementById('nextRoundBtn').style.display = 'none'
+    document.getElementById('nextRoundBtn').textContent = 'Next Round'
+
+    const roundCounter = document.getElementById('roundCounter')
+    roundCounter.textContent = `Round ${currentRound}/4`
+
+    createCards()
+}
+
+// Move to next round
+document.getElementById('nextRoundBtn').addEventListener('click', () => {
+    if (currentRound < 4) {
+        currentRound++
+        setupRound()
+    } else {
+        // Game complete - show code animation
+        triggerGameComplete()
+    }
+})
+
+// Trigger final game complete animation
+function triggerGameComplete() {
+    const gameGrid = document.getElementById('gameGrid')
     const codeArea = document.getElementById('codeArea')
-    const digitGroups = document.querySelectorAll('.code-digit-group')
-    const hint = document.getElementById('hint')
-    const circleRows = document.querySelectorAll('.circle-row')
-    const digitLines = document.querySelectorAll('.digit-line')
-    const digitPlaceholders = document.querySelectorAll('.digit-placeholder')
+    const roundCounter = document.getElementById('roundCounter')
     const heading = document.querySelector('h1')
+    const nextBtn = document.getElementById('nextRoundBtn')
 
-    imgContainer.classList.add('quiz-complete')
+    gameGrid.style.display = 'none'
+    roundCounter.style.display = 'none'
+    nextBtn.style.display = 'none'
+
+    codeArea.style.display = 'flex'
     codeArea.classList.add('quiz-complete')
-    hint.classList.add('quiz-complete')
+
+    const digitGroups = document.querySelectorAll('#codeArea .code-digit-group')
+    const circleRows = document.querySelectorAll('#codeArea .circle-row')
+    const digitLines = document.querySelectorAll('#codeArea .digit-line')
+
     digitGroups.forEach(group => group.classList.add('centered'))
     circleRows.forEach(row => row.classList.add('quiz-complete'))
     digitLines.forEach(line => line.classList.add('quiz-complete'))
-    digitPlaceholders.forEach(digit => digit.classList.add('quiz-complete'))
     if (heading) heading.classList.add('quiz-complete')
 }
 
-// function to fill a cirlcle
-function fillCircle(index) {
-    switch (index) {
-        case 1:
-            fill(circle1)
-            break
-        case 2:
-            fill(circle2)
-            break
-        case 3:
-            fill(circle3)
-            break
-        case 4:
-            fill(circle4)
-            break
-        case 5:
-            fill(circle5)
-            break
-        case 6:
-            fill(circle6)
-            break
-        case 7:
-            fill(circle7)
-            break
-        case 8:
-            fill(circle8)
-            break
-        case 9:
-            fill(circle9)
-            break
-        case 10:
-            fill(circle10)
-            break
-        case 11:
-            fill(circle11)
-            break
-        case 12:
-            fill(circle12)
-            break
-    }
-}
+// Set initial digit values and hide them
+document.getElementById('digit1').textContent = CODE[0]
+document.getElementById('digit2').textContent = CODE[1]
+document.getElementById('digit3').textContent = CODE[2]
+document.getElementById('digit4').textContent = CODE[3]
 
-function fill(circleElement) {
-    // fade the inside of the circle to green with a black checkmark
-    const fillDiv = circleElement.querySelector('.c-fill')
-    const iconDiv = circleElement.querySelector('.c-icon')
-    const dotDiv = circleElement.querySelector('.c-dot')
-
-    if (fillDiv && !fillDiv.classList.contains('active')) {
-        fillDiv.classList.add('active')
-        if (iconDiv) {
-            iconDiv.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>`
-        }
-        if (dotDiv) dotDiv.style.display = 'none'
-    }
-}
-
-// Create a reveal digit animation
-function revealDigit(digitElement) {
-    if (digitElement.classList.contains('revealed')) return
-    digitElement.classList.add('revealed')
-    digitElement.style.animation = 'fadeReveal 0.4s ease forwards'
-    digitElement.style.visibility = 'visible'
-}
-
-// Create click functions for each image
-function handleAnswer(isLeft) {
-    if (isLeft) {
-        clickLeft()
-    }
-    else {
-        clickRight()
-    }
-}
-
-function clickLeft() {
-    if (correctCount >= 12) return
-
-    if (!isLeftCorrect) {
-        correctCount++
-        correct.splice(currentCorrectIndex, 1)
-        incorrect.splice(currentIncorrectIndex, 1)
-        fillCircle(correctCount)
-        document.getElementById('hint').classList.remove('show')
-        if (correctCount < 12) {
-            updateImages()
-        }
-        checkDigits()
-    } else {
-        // Wrong answer - shake the image and show hint
-        img1.classList.add('wrong-shake')
-        document.getElementById('hint').classList.add('show')
-        setTimeout(() => {
-            img1.classList.remove('wrong-shake')
-            if (correctCount < 12) {
-                updateImages()
-            }
-            checkDigits()
-        }, 700)
-    }
-}
-
-function clickRight() {
-    if (correctCount >= 12) return
-
-    if (isLeftCorrect) {
-        correctCount++
-        correct.splice(currentCorrectIndex, 1)
-        incorrect.splice(currentIncorrectIndex, 1)
-        fillCircle(correctCount)
-        document.getElementById('hint').classList.remove('show')
-        if (correctCount < 12) {
-            updateImages()
-        }
-        checkDigits()
-    } else {
-        // Wrong answer - shake the image and show hint
-        img2.classList.add('wrong-shake')
-        document.getElementById('hint').classList.add('show')
-        setTimeout(() => {
-            img2.classList.remove('wrong-shake')
-            if (correctCount < 12) {
-                updateImages()
-            }
-            checkDigits()
-        }, 500)
-    }
-}
-
-updateImages()
+document.getElementById('digit1').style.visibility = 'hidden'
+document.getElementById('digit2').style.visibility = 'hidden'
+document.getElementById('digit3').style.visibility = 'hidden'
+document.getElementById('digit4').style.visibility = 'hidden'
