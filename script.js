@@ -32,7 +32,7 @@ document.addEventListener('keydown', (e) => {
 })
 
 // Password validation with OTP
-const CORRECT_PASSWORD = '1763'
+const CORRECT_PASSWORD = '7438'
 const otpInputs = document.querySelectorAll('.otp-input')
 const passwordScreen = document.getElementById('passwordScreen')
 const gameContent = document.getElementById('gameContent')
