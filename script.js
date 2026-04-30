@@ -1,4 +1,5 @@
 
+// ========== SECURITY ========== 
 // Prevent developer tools and right-click inspection
 document.addEventListener('contextmenu', (e) => {
     e.preventDefault()
@@ -32,7 +33,7 @@ document.addEventListener('keydown', (e) => {
 })
 
 // Password validation with OTP
-const CORRECT_PASSWORD = '1763'
+const CORRECT_PASSWORD = '7438'
 const otpInputs = document.querySelectorAll('.otp-input')
 const passwordScreen = document.getElementById('passwordScreen')
 const quizContent = document.getElementById('quizContent')
@@ -112,282 +113,275 @@ function showPasswordError() {
 // Focus first input on load
 otpInputs[0].focus()
 
-// array for the 4-digit code
+// ========== GAME STATE & CONFIGURATION ========== 
+
 const code = [5, 9, 0, 4]
 
-// get each cirlce element
-const circle1 = document.getElementById('circle1')
-const circle2 = document.getElementById('circle2')
-const circle3 = document.getElementById('circle3')
-const circle4 = document.getElementById('circle4')
-const circle5 = document.getElementById('circle5')
-const circle6 = document.getElementById('circle6')
-const circle7 = document.getElementById('circle7')
-const circle8 = document.getElementById('circle8')
-const circle9 = document.getElementById('circle9')
-const circle10 = document.getElementById('circle10')
-const circle11 = document.getElementById('circle11')
-const circle12 = document.getElementById('circle12')
+// Stage configuration: [totalCards, numAiCards]
+const stageConfig = {
+    1: { totalCards: 3, aiCards: 2 },
+    2: { totalCards: 4, aiCards: 2 },
+    3: { totalCards: 5, aiCards: 2 },
+    4: { totalCards: 6, aiCards: 2 }
+}
 
-// varaibles to hold the digits
+// Image pools - all available images
+const aiImages = [
+    './photos/cards/ai/BMW.png',
+    './photos/cards/ai/beach.png',
+    './photos/cards/ai/clurb.png',
+    './photos/cards/ai/cuddle.png',
+    './photos/cards/ai/engagement.png',
+    './photos/cards/ai/flowers.png',
+    './photos/cards/ai/kiss-restaurant.png',
+    './photos/cards/ai/kiss.png',
+    './photos/cards/ai/marathon.png',
+    './photos/cards/ai/mirror.png',
+    './photos/cards/ai/steps.png',
+    './photos/cards/ai/thailand.png'
+]
+
+const realImages = [
+    './photos/cards/real/BMW.png',
+    './photos/cards/real/car-selfie.png',
+    './photos/cards/real/club.png',
+    './photos/cards/real/flowers.png',
+    './photos/cards/real/lunch.png',
+    './photos/cards/real/marathon.png',
+    './photos/cards/real/mirror.png',
+    './photos/cards/real/paddle.png',
+    './photos/cards/real/selfie.png',
+    './photos/cards/real/steps.png',
+    './photos/cards/real/tennis.png',
+    './photos/cards/real/thailand.png'
+]
+
+// Game state
+let gameState = {
+    currentStage: 1,
+    selectedCards: [],
+    currentCards: [],
+    aiCardIndices: [],
+    isProcessing: false,
+    correctSelections: 0
+}
+
+// Store stage configurations so they remain consistent during a playthrough
+let stageConfigs = {
+    1: null,
+    2: null,
+    3: null,
+    4: null
+}
+
+// DOM elements
+const cardGrid = document.getElementById('cardGrid')
+const stageNumber = document.getElementById('stageNumber')
+const hint = document.getElementById('hint')
 const digit1 = document.getElementById('digit1')
 const digit2 = document.getElementById('digit2')
 const digit3 = document.getElementById('digit3')
 const digit4 = document.getElementById('digit4')
+
+// Initialize digit visibility
+digit1.style.visibility = 'hidden'
+digit2.style.visibility = 'hidden'
+digit3.style.visibility = 'hidden'
+digit4.style.visibility = 'hidden'
 
 digit1.textContent = code[0]
 digit2.textContent = code[1]
 digit3.textContent = code[2]
 digit4.textContent = code[3]
 
-digit1.style.visibility = 'hidden'
-digit2.style.visibility = 'hidden'
-digit3.style.visibility = 'hidden'
-digit4.style.visibility = 'hidden'
+// ========== UTILITY FUNCTIONS ========== 
 
-// Variables holding the images
-const img1 = document.querySelector('.img1')
-const img2 = document.querySelector('.img2')
-img1.addEventListener('click', () => handleAnswer(true))
-img2.addEventListener('click', () => handleAnswer(false))
-
-// Create image buckets
-
-const correct = []
-const incorrect = []
-
-// Populate the correct buckets with file paths to each image in the Instagram/Hers folder
-correct.push('./photos/real/0-club.png')
-correct.push('./photos/real/1-flower-picking.png')
-correct.push('./photos/real/2-run.png')
-correct.push('./photos/real/3-stairs.png')
-correct.push('./photos/real/4-padel.png')
-correct.push('./photos/real/5-selfie.png')
-correct.push('./photos/real/6-lunch.png')
-correct.push('./photos/real/7-thailand.png')
-correct.push('./photos/real/8-car-selfie.png')
-correct.push('./photos/real/9-mirror-selfie.png')
-correct.push('./photos/real/10-tennis.png')
-correct.push('./photos/real/11-new-car.png')
-
-// Populate the incorrect buckets with file paths to each image in the Instagram/Him folder
-incorrect.push('./photos/ai/0-beach.png')
-incorrect.push('./photos/ai/1-couch.png')
-incorrect.push('./photos/ai/2-dinner.png')
-incorrect.push('./photos/ai/3-club.png')
-incorrect.push('./photos/ai/4-proposal.png')
-incorrect.push('./photos/ai/5-run.png')
-incorrect.push('./photos/ai/6-kissing.png')
-incorrect.push('./photos/ai/7-car.png')
-incorrect.push('./photos/ai/8-thailand.png')
-incorrect.push('./photos/ai/9-flower-picking.png')
-incorrect.push('./photos/ai/10-stairs.png')
-incorrect.push('./photos/ai/11-mirror.png')
-
-// Function to choose a random index in the correct and incorrect buckets
-let currentCorrectIndex = 0
-let currentIncorrectIndex = 0
-
-function getNextCorrectImage() {
-    if (correct.length > 0) {
-        currentCorrectIndex = Math.floor(Math.random() * correct.length)
+function shuffleArray(array) {
+    const arr = [...array]
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]]
     }
+    return arr
 }
 
-function getNextIncorrectImage() {
-    if (incorrect.length > 0) {
-        currentIncorrectIndex = Math.floor(Math.random() * incorrect.length)
-    }
+function getRandomSubset(array, count) {
+    const shuffled = shuffleArray(array)
+    return shuffled.slice(0, count)
 }
 
-let isLeftCorrect = true
+// ========== STAGE SETUP ========== 
 
-function updateImages() {
-    getNextCorrectImage()
-    getNextIncorrectImage()
+function initializeStage(stageNum) {
+    const config = stageConfig[stageNum]
 
-    // choose a random boolean to determine which image goes where
-    const showCorrectOnLeft = Math.random() < 0.5
-    if (showCorrectOnLeft) {
-        img1.src = correct[currentCorrectIndex]
-        img2.src = incorrect[currentIncorrectIndex]
-        isLeftCorrect = true
-    }
-    else {
-        img1.src = incorrect[currentIncorrectIndex]
-        img2.src = correct[currentCorrectIndex]
-        isLeftCorrect = false
-    }
-}
+    // Check if this stage has already been configured in this playthrough
+    if (stageConfigs[stageNum] === null) {
+        // First time entering this stage - generate and store the configuration
+        const selectedAi = getRandomSubset(aiImages, config.aiCards)
+        const selectedReal = getRandomSubset(realImages, config.totalCards - config.aiCards)
 
-// Counter for correct answers
-let correctCount = 0
+        const cards = [
+            ...selectedAi.map(img => ({ src: img, isAi: true })),
+            ...selectedReal.map(img => ({ src: img, isAi: false }))
+        ]
 
-// function to reveal digits when the count reaches certain thresholds
-function checkDigits() {
-    if (correctCount == 3) { // 0, 1, 2
-        revealDigit(digit1)
-    }
-    if (correctCount == 6) { // 3, 4, 5
-        revealDigit(digit2)
-    }
-    if (correctCount == 9) { // 6, 7, 8
-        revealDigit(digit3)
-    }
-    if (correctCount == 12) { // 9, 10, 11
-        revealDigit(digit4)
-        setTimeout(triggerQuizComplete, 400)
-    }
-}
+        // Shuffle to randomize positions for this stage
+        let shuffled = shuffleArray(cards)
 
-// function to trigger completion animation
-function triggerQuizComplete() {
-    const imgContainer = document.getElementById('imgContainer')
-    const codeArea = document.getElementById('codeArea')
-    const digitGroups = document.querySelectorAll('.code-digit-group')
-    const hint = document.getElementById('hint')
-    const circleRows = document.querySelectorAll('.circle-row')
-    const digitLines = document.querySelectorAll('.digit-line')
-    const digitPlaceholders = document.querySelectorAll('.digit-placeholder')
-    const heading = document.querySelector('h1')
+        // For stage 4, move AI cards up one position in the grid (3x2 grid)
+        if (stageNum === 4) {
+            // Find AI card indices
+            const aiIndices = shuffled
+                .map((card, idx) => card.isAi ? idx : -1)
+                .filter(idx => idx !== -1)
 
-    imgContainer.classList.add('quiz-complete')
-    codeArea.classList.add('quiz-complete')
-    hint.classList.add('quiz-complete')
-    digitGroups.forEach(group => group.classList.add('centered'))
-    circleRows.forEach(row => row.classList.add('quiz-complete'))
-    digitLines.forEach(line => line.classList.add('quiz-complete'))
-    digitPlaceholders.forEach(digit => digit.classList.add('quiz-complete'))
-    if (heading) heading.classList.add('quiz-complete')
-}
-
-// function to fill a cirlcle
-function fillCircle(index) {
-    switch (index) {
-        case 1:
-            fill(circle1)
-            break
-        case 2:
-            fill(circle2)
-            break
-        case 3:
-            fill(circle3)
-            break
-        case 4:
-            fill(circle4)
-            break
-        case 5:
-            fill(circle5)
-            break
-        case 6:
-            fill(circle6)
-            break
-        case 7:
-            fill(circle7)
-            break
-        case 8:
-            fill(circle8)
-            break
-        case 9:
-            fill(circle9)
-            break
-        case 10:
-            fill(circle10)
-            break
-        case 11:
-            fill(circle11)
-            break
-        case 12:
-            fill(circle12)
-            break
-    }
-}
-
-function fill(circleElement) {
-    // fade the inside of the circle to green with a black checkmark
-    const fillDiv = circleElement.querySelector('.c-fill')
-    const iconDiv = circleElement.querySelector('.c-icon')
-    const dotDiv = circleElement.querySelector('.c-dot')
-
-    if (fillDiv && !fillDiv.classList.contains('active')) {
-        fillDiv.classList.add('active')
-        if (iconDiv) {
-            iconDiv.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>`
+            // Move each AI index up by 3 (from bottom row to top row)
+            // If in bottom row (3-5), move to top row (0-2)
+            aiIndices.forEach(aiIdx => {
+                if (aiIdx >= 3) {
+                    const newIdx = aiIdx - 3
+                    // Swap the AI card with the card at the new position
+                    const temp = shuffled[aiIdx]
+                    shuffled[aiIdx] = shuffled[newIdx]
+                    shuffled[newIdx] = temp
+                }
+            })
         }
-        if (dotDiv) dotDiv.style.display = 'none'
+
+        stageConfigs[stageNum] = shuffled
     }
+
+    // Use the stored configuration for this stage
+    gameState.currentCards = stageConfigs[stageNum]
+
+    // Track which card indices are AI
+    gameState.aiCardIndices = gameState.currentCards
+        .map((card, idx) => card.isAi ? idx : -1)
+        .filter(idx => idx !== -1)
+
+    gameState.selectedCards = []
+    gameState.correctSelections = 0
+    gameState.isProcessing = false
+
+    // Update stage indicator
+    stageNumber.textContent = stageNum
+
+    renderCards()
 }
 
-// Create a reveal digit animation
+// ========== CARD RENDERING ========== 
+
+function renderCards() {
+    cardGrid.innerHTML = ''
+
+    gameState.currentCards.forEach((card, index) => {
+        const cardEl = document.createElement('div')
+        cardEl.className = 'card'
+        cardEl.dataset.index = index
+
+        cardEl.innerHTML = `
+            <div class="card-inner">
+                <div class="card-face card-back">
+                    <img src="./photos/cards/polaroid-back.png" alt="Card back">
+                </div>
+                <div class="card-face card-front">
+                    <img src="${card.src}" alt="Card image">
+                </div>
+            </div>
+        `
+
+        cardEl.addEventListener('click', () => handleCardClick(index, cardEl))
+        cardGrid.appendChild(cardEl)
+    })
+}
+
+// ========== CARD INTERACTION ========== 
+
+function handleCardClick(index, cardEl) {
+    if (gameState.isProcessing) return
+    if (gameState.selectedCards.includes(index)) return
+
+    gameState.isProcessing = true
+
+    // Flip card
+    cardEl.classList.add('flipped')
+
+    setTimeout(() => {
+        const card = gameState.currentCards[index]
+
+        if (card.isAi) {
+            // Correct selection
+            gameState.selectedCards.push(index)
+            gameState.correctSelections++
+            cardEl.classList.add('correct')
+            hint.classList.remove('show')
+
+            // Check if stage complete
+            if (gameState.correctSelections === stageConfig[gameState.currentStage].aiCards) {
+                advanceStage()
+            } else {
+                gameState.isProcessing = false
+            }
+        } else {
+            // Wrong selection - reset to stage 1
+            cardEl.classList.add('wrong')
+            hint.classList.add('show')
+
+            setTimeout(() => {
+                resetGame()
+            }, 600)
+        }
+    }, 300)
+}
+
+// ========== STAGE PROGRESSION ========== 
+
+function advanceStage() {
+    const currentStage = gameState.currentStage
+
+    // Reveal digit for this stage
+    const digitMap = { 1: digit1, 2: digit2, 3: digit3, 4: digit4 }
+    revealDigit(digitMap[currentStage])
+
+    setTimeout(() => {
+        if (currentStage === 4) {
+            triggerGameComplete()
+        } else {
+            gameState.currentStage++
+            initializeStage(gameState.currentStage)
+            gameState.isProcessing = false
+        }
+    }, 400)
+}
+
+function resetGame() {
+    gameState.currentStage = 1
+    initializeStage(gameState.currentStage)
+}
+
+// ========== CODE REVEAL ========== 
+
 function revealDigit(digitElement) {
     if (digitElement.classList.contains('revealed')) return
     digitElement.classList.add('revealed')
-    digitElement.style.animation = 'fadeReveal 0.4s ease forwards'
     digitElement.style.visibility = 'visible'
 }
 
-// Create click functions for each image
-function handleAnswer(isLeft) {
-    if (isLeft) {
-        clickLeft()
-    }
-    else {
-        clickRight()
-    }
+// ========== GAME COMPLETION ========== 
+
+function triggerGameComplete() {
+    const imgContainer = cardGrid
+    const codeArea = document.getElementById('codeArea')
+    const digitGroups = document.querySelectorAll('.code-digit-group')
+    const heading = document.querySelector('h1')
+
+    cardGrid.classList.add('quiz-complete')
+    codeArea.classList.add('quiz-complete')
+    hint.classList.add('quiz-complete')
+    digitGroups.forEach(group => group.classList.add('centered'))
+    if (heading) heading.classList.add('quiz-complete')
 }
 
-function clickLeft() {
-    if (correctCount >= 12) return
-
-    if (!isLeftCorrect) {
-        correctCount++
-        correct.splice(currentCorrectIndex, 1)
-        incorrect.splice(currentIncorrectIndex, 1)
-        fillCircle(correctCount)
-        document.getElementById('hint').classList.remove('show')
-        if (correctCount < 12) {
-            updateImages()
-        }
-        checkDigits()
-    } else {
-        // Wrong answer - shake the image and show hint
-        img1.classList.add('wrong-shake')
-        document.getElementById('hint').classList.add('show')
-        setTimeout(() => {
-            img1.classList.remove('wrong-shake')
-            if (correctCount < 12) {
-                updateImages()
-            }
-            checkDigits()
-        }, 700)
-    }
-}
-
-function clickRight() {
-    if (correctCount >= 12) return
-
-    if (isLeftCorrect) {
-        correctCount++
-        correct.splice(currentCorrectIndex, 1)
-        incorrect.splice(currentIncorrectIndex, 1)
-        fillCircle(correctCount)
-        document.getElementById('hint').classList.remove('show')
-        if (correctCount < 12) {
-            updateImages()
-        }
-        checkDigits()
-    } else {
-        // Wrong answer - shake the image and show hint
-        img2.classList.add('wrong-shake')
-        document.getElementById('hint').classList.add('show')
-        setTimeout(() => {
-            img2.classList.remove('wrong-shake')
-            if (correctCount < 12) {
-                updateImages()
-            }
-            checkDigits()
-        }, 500)
-    }
-}
-
-updateImages()
+// ========== INITIALIZE GAME ========== 
+initializeStage(1)
