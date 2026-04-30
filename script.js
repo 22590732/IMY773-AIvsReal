@@ -1,6 +1,7 @@
-
+const instructionScreen = document.getElementById('instructionScreen')
+const startGameButton = document.getElementById('startGameButton')
 // ========== SECURITY ========== 
-// Prevent developer tools and right-click inspection
+// Prevent developer tools and right - click inspection
 document.addEventListener('contextmenu', (e) => {
     e.preventDefault()
 })
@@ -76,7 +77,6 @@ function checkOTP() {
     const otp = Array.from(otpInputs).map(input => input.value).join('')
 
     if (otp.length < 4) {
-        // Show incomplete message
         passwordError.style.display = 'block'
         setTimeout(() => {
             passwordError.style.display = 'none'
@@ -85,11 +85,9 @@ function checkOTP() {
     }
 
     if (otp === CORRECT_PASSWORD) {
+        // Hide password and show instructions instead of the game
         passwordScreen.classList.add('hidden')
-        setTimeout(() => {
-            quizContent.classList.remove('quiz-hidden')
-            quizContent.classList.add('fade-in')
-        }, 100)
+        instructionScreen.classList.remove('hidden')
     } else {
         showPasswordError()
     }
@@ -109,6 +107,16 @@ function showPasswordError() {
         otpInputs[0].focus()
     }, 500)
 }
+
+startGameButton.addEventListener('click', () => {
+    instructionScreen.classList.add('hidden')
+    setTimeout(() => {
+        quizContent.classList.remove('quiz-hidden')
+        quizContent.classList.add('fade-in')
+        // Ensure stage 1 is ready
+        initializeStage(1)
+    }, 100)
+})
 
 // Focus first input on load
 otpInputs[0].focus()
@@ -352,7 +360,7 @@ function advanceStage() {
             initializeStage(gameState.currentStage)
             gameState.isProcessing = false
         }
-    }, 400)
+    }, 2000)
 }
 
 function resetGame() {
@@ -373,15 +381,25 @@ function revealDigit(digitElement) {
 function triggerGameComplete() {
     const imgContainer = cardGrid
     const codeArea = document.getElementById('codeArea')
+    const stageIndicator = document.getElementById('stageIndicator') // Add this
     const digitGroups = document.querySelectorAll('.code-digit-group')
     const heading = document.querySelector('h1')
 
     cardGrid.classList.add('quiz-complete')
     codeArea.classList.add('quiz-complete')
     hint.classList.add('quiz-complete')
+
+    if (stageIndicator) stageIndicator.classList.add('quiz-complete') // Add this
+
     digitGroups.forEach(group => group.classList.add('centered'))
     if (heading) heading.classList.add('quiz-complete')
+
+    // Optional: Force removal after animation to be 100% sure
+    setTimeout(() => {
+        cardGrid.style.display = 'none'
+        if (stageIndicator) stageIndicator.style.display = 'none'
+    }, 700)
 }
 
 // ========== INITIALIZE GAME ========== 
-initializeStage(1)
+// initializeStage(1)
