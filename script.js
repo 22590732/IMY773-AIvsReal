@@ -113,6 +113,8 @@ startGameButton.addEventListener('click', () => {
     setTimeout(() => {
         quizContent.classList.remove('quiz-hidden')
         quizContent.classList.add('fade-in')
+        // Allocate AI images for all stages (no repeats)
+        allocateAiImagesForGame()
         // Ensure stage 1 is ready
         initializeStage(1)
     }, 100)
@@ -129,8 +131,8 @@ const code = [5, 9, 0, 4]
 const stageConfig = {
     1: { totalCards: 3, aiCards: 2 },
     2: { totalCards: 4, aiCards: 2 },
-    3: { totalCards: 5, aiCards: 2 },
-    4: { totalCards: 6, aiCards: 2 }
+    3: { totalCards: 5, aiCards: 3 },
+    4: { totalCards: 6, aiCards: 4 }
 }
 
 // Image pools - all available images
@@ -170,8 +172,7 @@ let gameState = {
     selectedCards: [],
     currentCards: [],
     aiCardIndices: [],
-    isProcessing: false,
-    correctSelections: 0
+    isProcessing: false
 }
 
 // Store stage configurations so they remain consistent during a playthrough
@@ -182,6 +183,14 @@ let stageConfigs = {
     4: null
 }
 
+// Store pre-allocated AI images for each stage (no repeats across stages)
+let allocatedAiImages = {
+    1: [],
+    2: [],
+    3: [],
+    4: []
+}
+
 // DOM elements
 const cardGrid = document.getElementById('cardGrid')
 const stageNumber = document.getElementById('stageNumber')
@@ -190,6 +199,12 @@ const digit1 = document.getElementById('digit1')
 const digit2 = document.getElementById('digit2')
 const digit3 = document.getElementById('digit3')
 const digit4 = document.getElementById('digit4')
+const timerElement = document.getElementById('timer')
+const timerValue = document.getElementById('timerValue')
+
+// Timer state
+let currentTimer = null
+let timeRemaining = 30
 
 // Initialize digit visibility
 digit1.style.visibility = 'hidden'
@@ -218,15 +233,84 @@ function getRandomSubset(array, count) {
     return shuffled.slice(0, count)
 }
 
-// ========== STAGE SETUP ========== 
+function allocateAiImagesForGame() {
+    // Shuffle all AI images and allocate them to stages without repeats
+    const shuffledAi = shuffleArray(aiImages)
+    let index = 0
+
+    // Stage 1: 1 AI image
+    allocatedAiImages[1] = shuffledAi.slice(index, index + stageConfig[1].aiCards)
+    index += stageConfig[1].aiCards
+
+    // Stage 2: 3 AI images
+    allocatedAiImages[2] = shuffledAi.slice(index, index + stageConfig[2].aiCards)
+    index += stageConfig[2].aiCards
+
+    // Stage 3: 3 AI images
+    allocatedAiImages[3] = shuffledAi.slice(index, index + stageConfig[3].aiCards)
+    index += stageConfig[3].aiCards
+
+    // Stage 4: 5 AI images
+    allocatedAiImages[4] = shuffledAi.slice(index, index + stageConfig[4].aiCards)
+}
+
+// ========== TIMER ========== 
+
+function startTimer(durationSeconds = 30) {
+    stopTimer()
+    timeRemaining = durationSeconds
+    updateTimerDisplay()
+
+    currentTimer = setInterval(() => {
+        timeRemaining--
+        updateTimerDisplay()
+
+        if (timeRemaining <= 0) {
+            stopTimer()
+            onTimeExpired()
+        }
+    }, 1000)
+}
+
+function updateTimerDisplay() {
+    timerValue.textContent = timeRemaining
+    timerElement.classList.remove('warning', 'critical')
+
+    if (timeRemaining <= 5) {
+        timerElement.classList.add('critical')
+    } else if (timeRemaining <= 10) {
+        timerElement.classList.add('warning')
+    }
+}
+
+function stopTimer() {
+    if (currentTimer) {
+        clearInterval(currentTimer)
+        currentTimer = null
+    }
+}
+
+function onTimeExpired() {
+    // Time's up! Bump down a stage (or reset if stage 1)
+    if (gameState.currentStage === 1) {
+        gameState.currentStage = 1
+    } else {
+        gameState.currentStage--
+    }
+
+    gameState.isProcessing = false
+    initializeStage(gameState.currentStage)
+}
+
+// ========== STAGE SETUP ==========
 
 function initializeStage(stageNum) {
     const config = stageConfig[stageNum]
 
     // Check if this stage has already been configured in this playthrough
     if (stageConfigs[stageNum] === null) {
-        // First time entering this stage - generate and store the configuration
-        const selectedAi = getRandomSubset(aiImages, config.aiCards)
+        // First time entering this stage - use pre-allocated AI images
+        const selectedAi = allocatedAiImages[stageNum]
         const selectedReal = getRandomSubset(realImages, config.totalCards - config.aiCards)
 
         const cards = [
@@ -236,26 +320,6 @@ function initializeStage(stageNum) {
 
         // Shuffle to randomize positions for this stage
         let shuffled = shuffleArray(cards)
-
-        // For stage 4, move AI cards up one position in the grid (3x2 grid)
-        if (stageNum === 4) {
-            // Find AI card indices
-            const aiIndices = shuffled
-                .map((card, idx) => card.isAi ? idx : -1)
-                .filter(idx => idx !== -1)
-
-            // Move each AI index up by 3 (from bottom row to top row)
-            // If in bottom row (3-5), move to top row (0-2)
-            aiIndices.forEach(aiIdx => {
-                if (aiIdx >= 3) {
-                    const newIdx = aiIdx - 3
-                    // Swap the AI card with the card at the new position
-                    const temp = shuffled[aiIdx]
-                    shuffled[aiIdx] = shuffled[newIdx]
-                    shuffled[newIdx] = temp
-                }
-            })
-        }
 
         stageConfigs[stageNum] = shuffled
     }
@@ -269,13 +333,15 @@ function initializeStage(stageNum) {
         .filter(idx => idx !== -1)
 
     gameState.selectedCards = []
-    gameState.correctSelections = 0
     gameState.isProcessing = false
 
     // Update stage indicator
     stageNumber.textContent = stageNum
 
     renderCards()
+
+    // Start 10-second timer for this stage
+    startTimer(10)
 }
 
 // ========== CARD RENDERING ========== 
@@ -290,12 +356,7 @@ function renderCards() {
 
         cardEl.innerHTML = `
             <div class="card-inner">
-                <div class="card-face card-back">
-                    <img src="./photos/cards/polaroid-back.png" alt="Card back">
-                </div>
-                <div class="card-face card-front">
-                    <img src="${card.src}" alt="Card image">
-                </div>
+                <img src="${card.src}" alt="Card image" class="card-image">
             </div>
         `
 
@@ -310,62 +371,75 @@ function handleCardClick(index, cardEl) {
     if (gameState.isProcessing) return
     if (gameState.selectedCards.includes(index)) return
 
+    const card = gameState.currentCards[index]
+
+    // Check if user clicked on a real image (wrong) - immediately punish
+    if (!card.isAi) {
+        gameState.isProcessing = true
+        gameState.selectedCards.push(index)
+        cardEl.classList.add('selected')
+        handleWrongSelection()
+        return
+    }
+
+    // Add correct card to selected list and mark it visually
+    gameState.selectedCards.push(index)
+    cardEl.classList.add('selected')
+
+    // Wait for the correct number of selections (equal to AI count for this stage)
+    const aiCountForStage = stageConfig[gameState.currentStage].aiCards
+    if (gameState.selectedCards.length < aiCountForStage) {
+        return
+    }
+
+    // All correct selections made! Advance to next stage
     gameState.isProcessing = true
-
-    // Flip card
-    cardEl.classList.add('flipped')
-
-    setTimeout(() => {
-        const card = gameState.currentCards[index]
-
-        if (card.isAi) {
-            // Correct selection
-            gameState.selectedCards.push(index)
-            gameState.correctSelections++
-            cardEl.classList.add('correct')
-            hint.classList.remove('show')
-
-            // Check if stage complete
-            if (gameState.correctSelections === stageConfig[gameState.currentStage].aiCards) {
-                advanceStage()
-            } else {
-                gameState.isProcessing = false
-            }
-        } else {
-            // Wrong selection - reset to stage 1
-            cardEl.classList.add('wrong')
-            hint.classList.add('show')
-
-            setTimeout(() => {
-                resetGame()
-            }, 600)
-        }
-    }, 300)
+    handleCorrectSelection()
 }
 
-// ========== STAGE PROGRESSION ========== 
-
-function advanceStage() {
-    const currentStage = gameState.currentStage
-
-    // Reveal digit for this stage
-    const digitMap = { 1: digit1, 2: digit2, 3: digit3, 4: digit4 }
-    revealDigit(digitMap[currentStage])
+function handleCorrectSelection() {
+    hint.classList.remove('show')
+    stopTimer()
 
     setTimeout(() => {
-        if (currentStage === 4) {
+        if (gameState.currentStage === 4) {
             triggerGameComplete()
         } else {
             gameState.currentStage++
             initializeStage(gameState.currentStage)
             gameState.isProcessing = false
         }
-    }, 2000)
+    }, 800)
 }
 
-function resetGame() {
-    gameState.currentStage = 1
-    initializeStage(gameState.currentStage)
+function handleWrongSelection() {
+    // Show shake animation on selected cards
+    stopTimer()
+    const selectedCardEls = document.querySelectorAll('.card.selected')
+    selectedCardEls.forEach(card => {
+        card.classList.add('shake')
+    })
+    hint.classList.add('show')
+
+    setTimeout(() => {
+        // Remove selection styling
+        selectedCardEls.forEach(card => {
+            card.classList.remove('selected', 'shake')
+        })
+
+        // If on stage 1, just reset selections without changing stage or restarting timer
+        if (gameState.currentStage === 1) {
+            gameState.selectedCards = []
+            gameState.isProcessing = false
+            // Continue with existing timer
+            startTimer(timeRemaining)
+        } else {
+            // Bump down a stage
+            gameState.currentStage--
+            initializeStage(gameState.currentStage)
+            gameState.isProcessing = false
+        }
+    }, 600)
 }
 
 // ========== CODE REVEAL ========== 
@@ -379,6 +453,13 @@ function revealDigit(digitElement) {
 // ========== GAME COMPLETION ========== 
 
 function triggerGameComplete() {
+    // Stop the timer
+    stopTimer()
+
+    // Reveal all digits at game completion
+    const digitMap = { 1: digit1, 2: digit2, 3: digit3, 4: digit4 }
+    Object.values(digitMap).forEach(digit => revealDigit(digit))
+
     const imgContainer = cardGrid
     const codeArea = document.getElementById('codeArea')
     const stageIndicator = document.getElementById('stageIndicator') // Add this
@@ -388,6 +469,7 @@ function triggerGameComplete() {
     cardGrid.classList.add('quiz-complete')
     codeArea.classList.add('quiz-complete')
     hint.classList.add('quiz-complete')
+    timerElement.classList.add('quiz-complete')
 
     if (stageIndicator) stageIndicator.classList.add('quiz-complete') // Add this
 

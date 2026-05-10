@@ -34,8 +34,11 @@
             <h2>How to Play</h2>
             <div class="space-y-4 my-6 text-[#3b3b37] font-sans">
                 <p>There are <strong>4 stages</strong> to complete.</p>
-                <p>In each stage, find the <strong>2 AI-generated</strong> images to reveal a digit.</p>
-                <p class="text-sm text-red-500">Careful: If you flip a "Real" image, you will be sent back to Stage 1.</p>
+                <p>In each stage, you need to click on the <strong>AI generated</strong> images. At the end of all 4 stages you will reveal a code.</p>
+                <p>You only have <strong>10 seconds</strong> per stage! So use your time wisely!</p>
+                <p><strong>Rule #1:</strong> when you click on a real image, you will be sent back to the previous stage.</p>
+                <p><strong>Rule #2:</strong> if you fail to complete a stage within the time limit, you will also be sent back to the previous stage.</p>
+                <p><strong>Good luck!</strong></p>
             </div>
             <button id="startGameButton">Start Game</button>
         </div>
@@ -43,6 +46,11 @@
 
     <!-- Quiz Content -->
     <div id="quizContent" class="quiz-hidden">
+        <!-- Timer -->
+        <div id="timer" class="timer">
+            <span id="timerValue">30</span>s
+        </div>
+        
         <div>
             <h1 class="heading">Can you spot the fake?</h1>
         </div>
